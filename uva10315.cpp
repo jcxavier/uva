@@ -110,11 +110,11 @@ void score(Hand& hand) {
             break;
         }
     
-    hand.highest = c_to_i[hand.cards[4][0]];
-    hand.result = (sequential ? ST : HC);
-    
-    if (sequential)
+    if (sequential) {
+        hand.highest = c_to_i[hand.cards[4][0]];
+        hand.result = ST;
         return;
+    }
     
     // 3 of a kind or two pairs
     if (hand.values.size() == 3) {
@@ -125,7 +125,7 @@ void score(Hand& hand) {
                 return;
             }
             
-            if ((it->second == 2) && (it->second > hand.highest))
+            if ((it->second == 2) && (c_to_i[it->first] > hand.highest))
                 hand.highest = c_to_i[it->first];
         }
         
@@ -146,6 +146,8 @@ void score(Hand& hand) {
     }
     
     // high card
+    hand.highest = c_to_i[hand.cards[4][0]];
+    hand.result = HC;
 }
 
 int main() {
@@ -183,7 +185,7 @@ int main() {
         else if (black.result > white.result)
             printf("Black wins.\n");
         else {
-            if (white.result == HC || white.result == PA || white.result == FL) {
+            if ((white.result == HC) || (white.result == FL)) {    
                 for (int i = 4; i >= 0; i--)
                     if (white.highest == black.highest) {
                         white.highest = c_to_i[white.cards[i][0]];
@@ -191,25 +193,50 @@ int main() {
                     } else
                         break;
             }
-            else if (white.result == TP) {
-                char othercard[2];
+            else if ((white.result == PA) && (white.highest == black.highest)) {
+                int blackhighest[3];
+                int whitehighest[3];
+                int countb = 0, countw = 0;
+                
+                for (int i = 4; i >= 0; i--) {
+                    if (c_to_i[black.cards[i][0]] != black.highest)
+                        blackhighest[countb++] = c_to_i[black.cards[i][0]];
+                        
+                    if (c_to_i[white.cards[i][0]] != white.highest)
+                        whitehighest[countw++] = c_to_i[white.cards[i][0]];
+                }
+                
+                for (int i = 0; i != 3; i++) {
+                    black.highest = blackhighest[i];
+                    white.highest = whitehighest[i];
+                    
+                    if (black.highest != white.highest)
+                        break;
+                }
+            }
+            else if ((white.result == TP) && (white.highest == black.highest)) {
+                int othercard[2];
+                int secondhighest[2];
                 
                 for (map<char, int>::iterator it = black.values.begin(); it != black.values.end(); it++) {
                     if ((it->second == 2) && (c_to_i[it->first] != black.highest))
-                        black.highest = c_to_i[it->first];
-                        
+                        secondhighest[0] = c_to_i[it->first];
+                    
                     if (it->second == 1)
-                        othercard[0] = it->first;
+                        othercard[0] = c_to_i[it->first];
                 }
-                
+            
                 for (map<char, int>::iterator it = white.values.begin(); it != white.values.end(); it++) {
                     if ((it->second == 2) && (c_to_i[it->first] != white.highest))
-                        white.highest = c_to_i[it->first];
-                        
+                        secondhighest[1] = c_to_i[it->first];
+                    
                     if (it->second == 1)
-                        othercard[1] = it->first;
+                        othercard[1] = c_to_i[it->first];
                 }
-                
+            
+                black.highest = secondhighest[0];
+                white.highest = secondhighest[1];
+            
                 if (white.highest == black.highest) {
                     black.highest = othercard[0];
                     white.highest = othercard[1];
